@@ -28,7 +28,7 @@ def testMethods():
 		seq = pzl.Sequence(test[0], test[1])
 		assert seq is not None
 		assert seq.spreadGroups()
-		startingState = pzl.Sequence.stateForGroups(seq.groups, length = seq.length)
+		startingState = pzl.PuzzleUtil.stateForGroups(seq.groups, length = seq.length)
 		print(startingState)
 		assert startingState is not None and len(startingState) == seq.length
 
