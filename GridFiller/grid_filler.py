@@ -2,7 +2,7 @@ import puzzle_classes as pzl
 
 def main(args):
 	print("Args: ", args)
-	testMethods()
+	runTests()
 	print("Passed all tests.")
 	solution = solvePuzzle()
 	print("Solved puzzle: ", solution)
@@ -11,7 +11,16 @@ def main(args):
 def solvePuzzle():
 	return
 
-def testMethods():
+def runTests():
+	testSequenceInit()
+	testStateTransitions()
+	return
+
+def testSequenceInit():
+	print('''
+		Test sequence construction and validation.
+		==========================================''')
+
 	shouldBeTrue = [
 		([], []),
 		([1, 2], [0, 1, 0, 1, 1]),
@@ -36,6 +45,20 @@ def testMethods():
 		assert not pzl.PuzzleUtil.matches(test[0], test[1])
 		assert pzl.Sequence(test[0], test[1]) is not None
 	
+	return
+
+def testStateTransitions():
+	print('''
+		Test transitions between sequence states.
+		==========================================''')
+	
+	seq = pzl.Sequence([1, 1], [0 for i in range(7)])
+	seq.nextState()
+	maxStep = 100
+	while maxStep and seq.stateIndex:
+		maxStep -= 1
+		seq.nextState()
+
 	return
 
 if __name__ == "__main__":

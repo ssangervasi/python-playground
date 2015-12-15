@@ -8,7 +8,9 @@ class Sequence:
 		self.initialState = [int(bit) for bit in state]
 		self.prefilled = [index for index in range(self.length) if self.initialState[index] > 0 ]
 		self.groups = [Group(nextLen) for nextLen in pattern]
+		self.last = len(self.groups) - 1
 		self.invalidStates = set()
+		self.setInitialState()
 		return
 
 	def spreadGroups(self):
@@ -21,46 +23,63 @@ class Sequence:
 
 		return (not lastGroup) or lastGroup.end < self.length
 
+	def setInitialState(self):
+		self.stateIndex = 0
+		self.spreadGroups()
+		self.state = PuzzleUtil.stateForGroups(self.groups, self.length)
+		self.active = self.last
+		self.left = self.last
+		return self.state
+
 	def nextState(self):
 		if not self.state:
-			self.stateIndex = 0
-			self.spreadGroups()
-			self.state = PuzzleUtil.stateForGroups(self.groups, self.length)
-			self.activeGroup = len(self.groups) - 1
-			return self.state
+			return self.setInitialState()
 
-		self.stateIndex += 1
 		self.shiftGroups()
-		while self.stateIndex in self.invalidStates:
-			self.stateIndex += 1
-			self.shiftGroups()
+		# while self.stateIndex in self.invalidStates:
+		# 	self.stateIndex += 1
+		# 	self.shiftGroups()
 
 		# Default sequence has some bits filled
 		newState = self.initialState.copy()
 		PuzzleUtil.stateForGroups(self.groups, state = newState)
 		if PuzzleUtil.matches(self.pattern, newState):
 			self.state = newState
+			self.printState()
 		else:
+			self.printState("Invalid state", newState)
 			self.invalidStates.add(self.stateIndex)
 			self.nextState()
 
 		return self.state
 
 	def shiftGroups(self):
-		groupToShift = self.groups[self.activeGroup]
+		groupToShift = self.groups[self.active]
 		groupToShift.shift()
-		hitEnd = False
-		if self.activeGroup == len(self.groups) - 1:
-			hitEnd = groupToShift.contains(self.length)
+		if self.active == self.last:
+			if groupToShift.contains(self.length):
+				self.left -= 1
+				for groupIndex in range(self.left, self.last + 1):
+					groupToReset = self.groups[groupIndex]
+					groupToReset.reset()
+					groupToReset.shift()
+
 		else:
-			hitEnd = groupToShift.overlaps(self.groups[self.activeGroup + 1])
+			if groupToShift.overlaps(self.groups[self.active + 1]):
+				print("This never happens?")
+				self.active = self.left
 
-		if hitEnd:
-			pass
+		if self.left >= 0:
+			self.stateIndex += 1
 
-
+		else:
+			self.setInitialState()
 
 	# End Sequence
+
+	def printState(self, message = '', state = None):
+		state = state or self.state
+		print("{3} - State:\t{0:3d} {1:3d} {2}".format(self.stateIndex, self.left, state, message))
 
 class Group:
 	'''
@@ -83,6 +102,9 @@ class Group:
 		self.start = start
 		self.initial = start
 		return self.updateEnd()
+
+	def reset(self):
+		return self.setStart(self.initial)
 
 	def shift(self, distance = 1):
 		self.start += distance
