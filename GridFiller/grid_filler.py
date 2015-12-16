@@ -1,4 +1,5 @@
 import puzzle_classes as pzl
+from PIL import Image, ImageDraw
 
 def main(args):
 	print("Args: ", args)
@@ -13,8 +14,7 @@ def solvePuzzle():
 
 def runTests():
 	testSequenceInit()
-	testStateTransitions(2)
-	testStateTransitions(3)
+	testStateTransitions()
 	return
 
 def testSequenceInit():
@@ -48,18 +48,61 @@ def testSequenceInit():
 	
 	return
 
-def testStateTransitions(numGroups = 2, sequenceLength = 7):
+def testStateTransitions():
 	print('''
 		Test transitions between sequence states.
 		==========================================''')
-	
-	seq = pzl.Sequence([1 for i in range(numGroups)], [0 for i in range(sequenceLength)])
-	maxStep = 100
-	while maxStep and (maxStep == 100 or seq.stateIndex):
-		maxStep -= 1
-		seq.nextState()
+	testData = [
+		# (
+		# 	[1 for i in range(2)],
+		# 	[0 for i in range(7)]
+		# ),
+		# (
+		# 	[1 for i in range(3)],
+		# 	[0 for i in range(7)]
+		# ),
+		(
+			[1, 2, 1],
+			[0 for i in range(7)]
+		),
+		# (
+		# 	[1 for i in range(2)],
+		# 	[0 for i in range(7)]
+		# ),
+		# (
+		# 	[1 for i in range(2)],
+		# 	[0 for i in range(7)]
+		# ),
+	]
 
+	for test in testData:
+		runAllStates(pzl.Sequence(test[0], test[1]))
+	
+
+def runAllStates(seq):
+	maxStep = seq.length ** (seq.last + 1)
+	step = 0
+	states = [seq.state]
+	while step < maxStep and (step == 0 or seq.stateIndex):
+		step += 1
+		seq.nextState()
+		states.append(seq.state.copy())
+
+	drawSolution('states-{}-{}'.format(seq.last, seq.length), states)
 	return
+
+
+def drawSolution(solutionName, states):
+	soln = Image.new("RGB", (len(states[0]), len(states)), (255,255,255))
+	draw = ImageDraw.Draw(soln)
+	for row in range(len(states)):
+		for col in range(len(states[0])):
+			if states[row][col]:
+				draw.point((col, row), (0,0,0))
+
+	soln.save('solutions/' + solutionName + '.gif')
+	return soln
+
 
 if __name__ == "__main__":
 	import sys

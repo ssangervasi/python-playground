@@ -12,15 +12,6 @@ class Sequence:
 		self.setInitialState()
 		return
 
-	def spreadGroups(self):
-		nextStart = 0
-		lastGroup = None
-		for group in self.groups:
-			group.setStart(nextStart)
-			nextStart = group.end + 2
-			lastGroup = group
-
-		return (not lastGroup) or lastGroup.end < self.length
 
 	def setInitialState(self):
 		self.stateIndex = 0
@@ -43,10 +34,10 @@ class Sequence:
 
 		if self.left < 0:
 			self.setInitialState()
-			self.stateIndex = 0	
-		# while self.stateIndex in self.invalidStates:
-		# 	self.stateIndex += 1
-		# 	self.shiftGroups()
+			self.stateIndex = 0
+
+		if (self.stateIndex in self.invalidStates):
+			return self.nextState()
 
 		# Default sequence has some bits filled
 		newState = self.initialState.copy()
@@ -57,29 +48,49 @@ class Sequence:
 		else:
 			self.printState("Invalid state", newState)
 			self.invalidStates.add(self.stateIndex)
-			# self.nextState()
+			return self.nextState()
 
 		return self.state
 
 	def shiftGroups(self):
-		groupIndex = self.active
+		# groupIndex = self.last
 		hitBoundary = True
-		activeHit = False
-		while hitBoundary:
-			hitBoundary = self.cycleGroup(groupIndex)
-			if groupIndex < self.last:
-				groupIndex += 1
+		for groupIndex in range(self.last, self.active - 1, -1):
+			if hitBoundary:
+				hitBoundary = self.shiftGroup(groupIndex)
 			else:
-				hitBoundary = False
-
-		if groupIndex > self.last:
-			# print("GI", groupIndex, self.active)
+				break
+		
+		if hitBoundary:
 			self.active -= 1
+			res = self.spreadGroups(self.active, self.groups[self.active].start + 1)
 
 		if self.active < self.left:
 			# print("LEFT", self.active, self.left)
 			self.left -= 1
 			self.active = self.last
+			return True
+
+		return False
+
+	def spreadGroups(self, firstGroup = 0, start = 0 ):
+		# nextStart = start if start not None else self.groups[firstGroup].start
+		nextStart = start
+		nextGroup = None
+		# for group in self.groups:
+		for groupIndex in range(firstGroup, len(self.groups)):
+			nextGroup = self.groups[groupIndex]
+			nextGroup.setStart(nextStart)
+			nextStart = nextGroup.end + 2
+
+		return (not nextGroup) or nextGroup.end < self.length
+
+	def shiftGroup(self, groupIndex):
+		group = self.groups[groupIndex]
+		groupOnRight = self.groups[groupIndex + 1] if groupIndex < self.last else self.edgeRight
+		group.shift()
+		if group.overlaps(groupOnRight):
+			group.shift(-1)
 			return True
 
 		return False
