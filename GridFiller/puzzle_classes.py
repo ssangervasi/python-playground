@@ -8,7 +8,6 @@ class Sequence:
 		self.initialState = [int(bit) for bit in state]
 		self.prefilled = [index for index in range(self.length) if self.initialState[index] > 0 ]
 		self.groups = [Group(nextLen) for nextLen in pattern]
-		self.last = len(self.groups) - 1
 		self.invalidStates = set()
 		self.setInitialState()
 		return
@@ -27,15 +26,24 @@ class Sequence:
 		self.stateIndex = 0
 		self.spreadGroups()
 		self.state = PuzzleUtil.stateForGroups(self.groups, self.length)
+		self.last = len(self.groups) - 1
 		self.active = self.last
 		self.left = self.last
+		self.edgeLeft = Group(start = -2)
+		self.edgeRight = Group(start = self.length + 1)
+		self.printState(header = True)
 		return self.state
 
 	def nextState(self):
 		if not self.state:
 			return self.setInitialState()
 
+		self.stateIndex += 1
 		self.shiftGroups()
+
+		if self.left < 0:
+			self.setInitialState()
+			self.stateIndex = 0	
 		# while self.stateIndex in self.invalidStates:
 		# 	self.stateIndex += 1
 		# 	self.shiftGroups()
@@ -45,41 +53,57 @@ class Sequence:
 		PuzzleUtil.stateForGroups(self.groups, state = newState)
 		if PuzzleUtil.matches(self.pattern, newState):
 			self.state = newState
-			self.printState()
+			self.printState("Valid State")
 		else:
 			self.printState("Invalid state", newState)
 			self.invalidStates.add(self.stateIndex)
-			self.nextState()
+			# self.nextState()
 
 		return self.state
 
 	def shiftGroups(self):
-		groupToShift = self.groups[self.active]
-		groupToShift.shift()
-		if self.active == self.last:
-			if groupToShift.contains(self.length):
-				self.left -= 1
-				for groupIndex in range(self.left, self.last + 1):
-					groupToReset = self.groups[groupIndex]
-					groupToReset.reset()
-					groupToReset.shift()
+		groupIndex = self.active
+		hitBoundary = True
+		activeHit = False
+		while hitBoundary:
+			hitBoundary = self.cycleGroup(groupIndex)
+			if groupIndex < self.last:
+				groupIndex += 1
+			else:
+				hitBoundary = False
 
-		else:
-			if groupToShift.overlaps(self.groups[self.active + 1]):
-				print("This never happens?")
-				self.active = self.left
+		if groupIndex > self.last:
+			# print("GI", groupIndex, self.active)
+			self.active -= 1
 
-		if self.left >= 0:
-			self.stateIndex += 1
+		if self.active < self.left:
+			# print("LEFT", self.active, self.left)
+			self.left -= 1
+			self.active = self.last
+			return True
 
-		else:
-			self.setInitialState()
+		return False
+
+	def cycleGroup(self, groupIndex):
+		group = self.groups[groupIndex]
+		groupOnRight = self.groups[groupIndex + 1] if groupIndex < self.last else self.edgeRight
+		group.shift()
+		if group.overlaps(groupOnRight):
+			print("X overlaps Y", group, self.edgeRight)
+			groupOnLeft = self.groups[groupIndex - 1] if groupIndex >= 0 else self.edgeLeft
+			newStart = groupOnLeft.end + 2
+			group.setStart(newStart)
+			return True
+
+		return False
 
 	# End Sequence
 
-	def printState(self, message = '', state = None):
+	def printState(self, message = '', state = None, header = False):
 		state = state or self.state
-		print("{3} - State:\t{0:3d} {1:3d} {2}".format(self.stateIndex, self.left, state, message))
+		if (header):
+			print("State:\t{0}\t{1}\t{2}\t{3}".format('Index', 'Active', 'Left', 'State'))
+		print("State:\t{0:3d}\t{1:3d}\t{2:3d}\t{3}\t|\t{4}".format(self.stateIndex, self.active, self.left, state, message))
 
 class Group:
 	'''
@@ -88,11 +112,14 @@ class Group:
 
 	def __init__(self, length = 1, start = 0):
 		self.length = max(1, length)
-		self.setStart(max(0, start))
+		self.setStart(start)
 		return
 
 	def __iter__(self):
 		return iter(range(self.start, self.end + 1))
+
+	def __str__(self):
+		return '({0}, {1})'.format(self.start, self.end)
 
 	def updateEnd(self):
 		self.end = self.start + self.length - 1
@@ -103,8 +130,8 @@ class Group:
 		self.initial = start
 		return self.updateEnd()
 
-	def reset(self):
-		return self.setStart(self.initial)
+	def shiftStart(self, distance = 1):
+		return self.setStart(self.initial + distance)
 
 	def shift(self, distance = 1):
 		self.start += distance

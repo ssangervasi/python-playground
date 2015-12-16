@@ -13,7 +13,8 @@ def solvePuzzle():
 
 def runTests():
 	testSequenceInit()
-	testStateTransitions()
+	testStateTransitions(2)
+	testStateTransitions(3)
 	return
 
 def testSequenceInit():
@@ -47,15 +48,14 @@ def testSequenceInit():
 	
 	return
 
-def testStateTransitions():
+def testStateTransitions(numGroups = 2, sequenceLength = 7):
 	print('''
 		Test transitions between sequence states.
 		==========================================''')
 	
-	seq = pzl.Sequence([1, 1], [0 for i in range(7)])
-	seq.nextState()
+	seq = pzl.Sequence([1 for i in range(numGroups)], [0 for i in range(sequenceLength)])
 	maxStep = 100
-	while maxStep and seq.stateIndex:
+	while maxStep and (maxStep == 100 or seq.stateIndex):
 		maxStep -= 1
 		seq.nextState()
 
