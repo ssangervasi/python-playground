@@ -1,4 +1,5 @@
 import puzzle_classes as pzl
+import puzzle
 from PIL import Image, ImageDraw
 
 def main(args):
@@ -35,7 +36,7 @@ def testSequenceInit():
 
 	for test in shouldBeTrue:
 		assert pzl.PuzzleUtil.matches(test[0], test[1])
-		seq = pzl.Sequence(test[0], test[1])
+		seq = pzl.Sequence(test[0], test[1], log = True)
 		assert seq is not None
 		assert seq.spreadGroups()
 		startingState = pzl.PuzzleUtil.stateForGroups(seq.groups, length = seq.length)
@@ -44,7 +45,7 @@ def testSequenceInit():
 
 	for test in shouldBeFalse:
 		assert not pzl.PuzzleUtil.matches(test[0], test[1])
-		assert pzl.Sequence(test[0], test[1]) is not None
+		assert pzl.Sequence(test[0], test[1], log = True) is not None
 	
 	return
 
@@ -76,7 +77,7 @@ def testStateTransitions():
 	]
 
 	for test in testData:
-		runAllStates(pzl.Sequence(test[0], test[1]))
+		runAllStates(pzl.Sequence(test[0], test[1], log = True))
 	
 
 def runAllStates(seq):
@@ -86,19 +87,27 @@ def runAllStates(seq):
 	while step < maxStep and (step == 0 or seq.stateIndex):
 		step += 1
 		seq.nextState()
-		states.append(seq.state.copy())
+		states.append(seq.state)
 
 	drawSolution('states-{}-{}'.format(seq.last, seq.length), states)
 	return
 
 
 def drawSolution(solutionName, states):
-	soln = Image.new("RGB", (len(states[0]), len(states)), (255,255,255))
+	height = len(states)
+	width = len(states[0])
+	sqpx = 25
+	soln = Image.new("RGB", (width * sqpx + 1, height * sqpx + 1), (255,255,255))
 	draw = ImageDraw.Draw(soln)
-	for row in range(len(states)):
-		for col in range(len(states[0])):
+	for row in range(height):
+		
+		for col in range(width):
+			x = col * sqpx 
+			y = row * sqpx
+			fill = (255,255,255)
 			if states[row][col]:
-				draw.point((col, row), (0,0,0))
+				fill = (0,0,0)
+			draw.rectangle([x, y, x + sqpx, y + sqpx], fill, (211,226,0))
 
 	soln.save('solutions/' + solutionName + '.gif')
 	return soln

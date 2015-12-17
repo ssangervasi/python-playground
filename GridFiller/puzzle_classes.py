@@ -1,8 +1,8 @@
-
 class Sequence:
 	'''Wraps a sequence of 0's and 1's and maintains the state of possible sequences.'''
 
-	def __init__(self, pattern, state):
+	def __init__(self, pattern, state, log = False):
+		self.log = log
 		self.length = len(state)
 		self.pattern = [int(groupLen) for groupLen in pattern]
 		self.initialState = [int(bit) for bit in state]
@@ -16,7 +16,7 @@ class Sequence:
 	def setInitialState(self):
 		self.stateIndex = 0
 		self.spreadGroups()
-		self.state = PuzzleUtil.stateForGroups(self.groups, self.length)
+		self.state = PuzzleUtil.stateForGroups(self.groups, self.length, self.initialState.copy())
 		self.last = len(self.groups) - 1
 		self.active = self.last
 		self.left = self.last
@@ -26,6 +26,11 @@ class Sequence:
 		return self.state
 
 	def nextState(self):
+		'''
+		Step to the next valid sequence state. 
+		If no new states exit, reset to inital state.
+		Returns True if result state is the inital state
+		newState = self.initialState.copy()'''
 		if not self.state:
 			return self.setInitialState()
 
@@ -44,13 +49,15 @@ class Sequence:
 		PuzzleUtil.stateForGroups(self.groups, state = newState)
 		if PuzzleUtil.matches(self.pattern, newState):
 			self.state = newState
-			self.printState("Valid State")
+			if self.stateIndex != 0:
+				self.printState("Valid State")
+
 		else:
-			self.printState("Invalid state", newState)
+			# self.printState("Invalid state", newState)
 			self.invalidStates.add(self.stateIndex)
 			return self.nextState()
 
-		return self.state
+		return self.stateIndex == 0
 
 	def shiftGroups(self):
 		# groupIndex = self.last
@@ -95,26 +102,18 @@ class Sequence:
 
 		return False
 
-	def cycleGroup(self, groupIndex):
-		group = self.groups[groupIndex]
-		groupOnRight = self.groups[groupIndex + 1] if groupIndex < self.last else self.edgeRight
-		group.shift()
-		if group.overlaps(groupOnRight):
-			print("X overlaps Y", group, self.edgeRight)
-			groupOnLeft = self.groups[groupIndex - 1] if groupIndex >= 0 else self.edgeLeft
-			newStart = groupOnLeft.end + 2
-			group.setStart(newStart)
-			return True
-
-		return False
-
-	# End Sequence
 
 	def printState(self, message = '', state = None, header = False):
+		if not self.log:
+			return
+
 		state = state or self.state
 		if (header):
 			print("State:\t{0}\t{1}\t{2}\t{3}".format('Index', 'Active', 'Left', 'State'))
 		print("State:\t{0:3d}\t{1:3d}\t{2:3d}\t{3}\t|\t{4}".format(self.stateIndex, self.active, self.left, state, message))
+
+	# End Sequence
+
 
 class Group:
 	'''
