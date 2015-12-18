@@ -16,66 +16,84 @@ class GridPuzzle():
 		self.setGrid(grid or [[]])
 		self.patterns = {
 			"rows": patterns[0],
-			"columns": patterns[0]
+			"columns": patterns[1]
 		}
 		self.sequences = []
 		self.active = 0
-		self.offset = 0
+		self.increment = False
 		return
 
 	def setGrid(self, grid):
 		self.grid = grid
 		self.width = len(self.grid)
+		self.height = len(self.grid[0])
 		return self.grid
 	
 	def buildSequences(self):
 		self.sequences = [None for i in range(self.width)]
-		self.last = self.width - 1
-		for rowIndex in range():
+		for rowIndex in range(self.width):
 			initalState = self.grid[rowIndex]
-			pattern = self.patterns['row'][rowIndex]
-			self.sequences[self.width] = pzl.Sequence(pattern, row)
+			pattern = self.patterns["rows"][rowIndex]
+			self.sequences[rowIndex] = pzl.Sequence(pattern, initalState)
 
 		return self.sequences
 
+	def solve(self, maxStep = 100000):
+		stepsRemaining = 0
+		self.buildSequences()
+		exhausted = False
+		while stepsRemaining < maxStep and not exhausted and not self.isSolved():
+			exhausted = self.nextSolution()
 
-	def nextSolution(self):
-		activeSeq = self.sequences[self.active]
-		restarted = activeSeq.nextState()
-		if not restarted:
-			self.active = min(self.active + 1, self.last)
+		if stepsRemaining == maxStep:
+			print("No solution amongst first {} combinations".format(maxStep))
+
+		elif exhausted:
+			print("Unsolvable")
 
 		else:
+			return self.getSolutionGrid()
+
+	def getSolutionGrid(self):
+		return [seq.state for seq in self.sequences]
+
+	def isSolved(self):
+		grid = self.getSolutionGrid()
+		for column in range(self.height):
+			state = [grid[row][column] for row in range(self.height)]
+			pattern = self.patterns['columns'][column]
+			if not pzl.PuzzleUtil.matches(pattern, state):
+				return False
+
+		return True
+
+	def nextSolution(self):
+		"""
+		Step to the next solution state.
+		Currently innefficient and will not ignore duplicate states.
+		Returns True if all states have been explored, else False.
+		"""
+		# Check whether last sequence has been reached
+		if self.active >= self.width:
 			self.active -= 1
-					
+			self.increment = True
+			return False
 
-	# def nextSolution(self):
-	# 	activeSeq = self.sequences[self.active]
-	# 	restarted = activeSeq.nextState()
-	# 	if restarted:
-	# 		self.active += 1
-	# 		if self.active >= self.width:
-	# 			self.offset += 1
-	# 			self.active = self.offset
-	# 			for offset in range(self.offset)
-	# 				offsetSeq = self.sequences[offset]
-	# 				offsetSeq.nextState()
+		# Check whether the current sequence should be stepped through
+		restarted = False
+		if self.increment:
+			activeSeq = self.sequences[self.active]
+			restarted = activeSeq.nextState()
+		
+		# If the current sequence did a full loop, step backwards
+		if restarted:
+			self.active -= 1
+			self.increment = True
+			return self.active < 0
 
+		# Usually just step forwards
+		self.active += 1
+		self.increment = False
+		return False
 
 	# End GridPuzzle
-simpleData = [
-	[
-		[
-			[1, 2],
-			[1, 2, 1]
-		],
-		[
-			[1],
-			[2, 1]
-		]
-	],
-	[
-		[0 for i in range(7)] for i in range(7)
-	]
-]
-simplePuzzle = GridPuzzle(simpleData[0], simpleData[1])

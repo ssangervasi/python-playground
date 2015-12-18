@@ -1,17 +1,90 @@
-import puzzle_classes as pzl
-import puzzle
+import puzzle_classes as PzlClass
+import puzzle as Pzl
 from PIL import Image, ImageDraw
 
 def main(args):
 	print("Args: ", args)
-	runTests()
-	print("Passed all tests.")
-	solution = solvePuzzle()
-	print("Solved puzzle: ", solution)
+	argSet = set(args)
+	if '-t' in argSet or '--run-tests' in argSet: 
+		runTests()
+		print("Passed all tests.")
+
+	solveSimplePuzzle()
+	solveHardPuzzle()
 	return
 
-def solvePuzzle():
-	return
+def solveSimplePuzzle():
+	print("""
+		Solving a simple puzzle
+		=======================
+		""")
+	simplePattern =[
+		[
+			[1, 1],
+			[1],
+			[1, 1]
+		],
+		[
+			[1, 1],
+			[1],
+			[1, 1]
+		]
+	]		
+	simpleGrid = [
+		[0 for i in range(3)] for i in range(3)
+	]
+	simplePuzzle = Pzl.GridPuzzle(simplePattern, simpleGrid)
+	soln = simplePuzzle.solve()
+	if soln:
+		print(soln)
+		drawSolution("simple-solution", soln)
+	else:
+		print("""
+			NO SOLUTION
+			""")
+	print("""
+		==========================
+		""")
+
+def solveHardPuzzle():
+	print("""
+		Solving a hard puzzle
+		The output 'hard-solution.gif' should match 'hard-example.gif'
+		=======================
+		""")
+	simplePattern =[
+		[
+			[1, 1],
+			[1, 1],
+			[1, 1, 1],
+			[1, 1],
+			[1, 1]
+		],
+		[
+			[1, 1, 1],
+			[1, 1],
+			[1],
+			[1],
+			[3, 1]
+		]
+	]		
+	simpleGrid = [
+		[0 for i in range(5)] for i in range(5)
+	]
+	simpleGrid[0][0] = 1
+	simpleGrid[2][2] = 1
+	simplePuzzle = Pzl.GridPuzzle(simplePattern, simpleGrid)
+	soln = simplePuzzle.solve()
+	if soln:
+		print(soln)
+		drawSolution("hard-solution", soln)
+	else:
+		print("""
+			NO SOLUTION
+			""")
+	print("""
+		==========================
+		""")
 
 def runTests():
 	testSequenceInit()
@@ -35,17 +108,17 @@ def testSequenceInit():
 	]
 
 	for test in shouldBeTrue:
-		assert pzl.PuzzleUtil.matches(test[0], test[1])
-		seq = pzl.Sequence(test[0], test[1], log = True)
+		assert PzlClass.PuzzleUtil.matches(test[0], test[1])
+		seq = PzlClass.Sequence(test[0], test[1], log = True)
 		assert seq is not None
 		assert seq.spreadGroups()
-		startingState = pzl.PuzzleUtil.stateForGroups(seq.groups, length = seq.length)
+		startingState = PzlClass.PuzzleUtil.stateForGroups(seq.groups, length = seq.length)
 		print(startingState)
 		assert startingState is not None and len(startingState) == seq.length
 
 	for test in shouldBeFalse:
-		assert not pzl.PuzzleUtil.matches(test[0], test[1])
-		assert pzl.Sequence(test[0], test[1], log = True) is not None
+		assert not PzlClass.PuzzleUtil.matches(test[0], test[1])
+		assert PzlClass.Sequence(test[0], test[1], log = True) is not None
 	
 	return
 
@@ -77,7 +150,7 @@ def testStateTransitions():
 	]
 
 	for test in testData:
-		runAllStates(pzl.Sequence(test[0], test[1], log = True))
+		runAllStates(PzlClass.Sequence(test[0], test[1], log = True))
 	
 
 def runAllStates(seq):
