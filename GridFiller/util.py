@@ -1,23 +1,67 @@
-# def loopTest(breadth, depth):
-# 	results = []
-# 	arr = [-1 for i in range(breadth)]
-# 	active = 0
-# 	while active > -1:
-# 		if active >= breadth:
-# 			active -= 1
-# 			continue
+from PIL import Image, ImageDraw
 
-# 		arr[active] += 1
-# 		if arr[active] == depth:
-# 			arr[active] = -1
-# 			active -= 1
-# 			continue
+class PuzzleUtil:
+	'''Static methods for solving the puzzle'''
+
+	def zeroes(length = 0):
+		return [0 for i in range(length)]
+
+	def stateForGroups(groups, length = 0, state = None):
+		if not state:
+			state = PuzzleUtil.zeroes(length)
+		else:
+			length = len(state)
+
+		for group in groups:
+			for bit in group:
+				if bit >= length:
+					return None
+				state[bit] = 1
+
+		return state
 		
-# 		active += 1
-# 		results.append(''.join(str(max(val, 0)) for val in arr))
+	def matches(pattern, sequence):
+		'''Static helper checks whether a pattern is matched by a particular sequence.'''
+		nextGroup = 0
+		groupLen = 0
+		for entryIndex in range(len(sequence)):
+			entry = sequence[entryIndex]
+			isFilled = (entry > 0)
+			groupLen += isFilled
+			# Check for group match if the group just ended or the end of the list is reached
+			if groupLen > 0 and (not isFilled or entryIndex == len(sequence) - 1):
+				if (len(pattern) - 1 < nextGroup) or groupLen != pattern[nextGroup]:
+					return False
 
-# 	return results
+				groupLen = 0
+				nextGroup += 1
+
+		# Ensure last-found group was the last pattern
+		return nextGroup == len(pattern)
+
+
+	def drawSolution(solutionName, states):
+		height = len(states)
+		width = len(states[0])
+		sqpx = 25
+		soln = Image.new("RGB", (width * sqpx + 1, height * sqpx + 1), (255,255,255))
+		draw = ImageDraw.Draw(soln)
+		for row in range(height):
+			
+			for col in range(width):
+				x = col * sqpx 
+				y = row * sqpx
+				fill = (255,255,255)
+				if states[row][col]:
+					fill = (0,0,0)
+				draw.rectangle([x, y, x + sqpx, y + sqpx], fill, (211,226,0))
+
+		soln.save('solutions/' + solutionName + '.gif')
+		return soln
+
+	# End PuzzleUtil
 	
+
 def loopTest(breadth, depth):
 	results = []
 	arr = [0 for i in range(breadth)]
@@ -57,16 +101,17 @@ def recursionHelper(index, depth, arr, results):
 		results.append(''.join(str(val) for val in nextArr))
 		recursionHelper(index + 1, depth, nextArr, results)
 
-m = 4
-n = 2
-loopRes = loopTest(m, n)
-print(loopRes)
-print("Actual", len(loopRes))
-print("Unique", len(set(loopRes)))
+def testIterators():
+	m = 4
+	n = 2
+	loopRes = loopTest(m, n)
+	print(loopRes)
+	print("Actual", len(loopRes))
+	print("Unique", len(set(loopRes)))
 
-recRes = recursionTest(m, n)
-print(recRes)
-print("Actual", len(recRes))
-print("Unique", len(set(recRes)))
+	recRes = recursionTest(m, n)
+	print(recRes)
+	print("Actual", len(recRes))
+	print("Unique", len(set(recRes)))
 
-print("Diff?", set(recRes) - set(loopRes))
+	print("Diff?", set(recRes) - set(loopRes))

@@ -1,6 +1,6 @@
 import puzzle_classes as PzlClass
+from util import PuzzleUtil as PzlUtil
 import puzzle as Pzl
-from PIL import Image, ImageDraw
 
 def main(args):
 	print("Args: ", args)
@@ -9,35 +9,20 @@ def main(args):
 		runTests()
 		print("Passed all tests.")
 
-	solveSimplePuzzle()
-	solveHardPuzzle()
+	solvePuzzle("simple")
+	solvePuzzle("hard")
 	return
 
-def solveSimplePuzzle():
+def solvePuzzle(name):
 	print("""
-		Solving a simple puzzle
+		Solving puzzle: {}
 		=======================
-		""")
-	simplePattern =[
-		[
-			[1, 1],
-			[1],
-			[1, 1]
-		],
-		[
-			[1, 1],
-			[1],
-			[1, 1]
-		]
-	]		
-	simpleGrid = [
-		[0 for i in range(3)] for i in range(3)
-	]
-	simplePuzzle = Pzl.GridPuzzle(simplePattern, simpleGrid)
-	soln = simplePuzzle.solve()
+		""".format(name))
+	puzzle = Pzl.getPuzzle(name)
+	soln = puzzle.solve()
 	if soln:
 		print(soln)
-		drawSolution("simple-solution", soln)
+		PzlUtil.drawSolution(name + "-solution", soln)
 	else:
 		print("""
 			NO SOLUTION
@@ -46,45 +31,6 @@ def solveSimplePuzzle():
 		==========================
 		""")
 
-def solveHardPuzzle():
-	print("""
-		Solving a hard puzzle
-		The output 'hard-solution.gif' should match 'hard-example.gif'
-		=======================
-		""")
-	simplePattern =[
-		[
-			[1, 1],
-			[1, 1],
-			[1, 1, 1],
-			[1, 1],
-			[1, 1]
-		],
-		[
-			[1, 1, 1],
-			[1, 1],
-			[1],
-			[1],
-			[3, 1]
-		]
-	]		
-	simpleGrid = [
-		[0 for i in range(5)] for i in range(5)
-	]
-	simpleGrid[0][0] = 1
-	simpleGrid[2][2] = 1
-	simplePuzzle = Pzl.GridPuzzle(simplePattern, simpleGrid)
-	soln = simplePuzzle.solve()
-	if soln:
-		print(soln)
-		drawSolution("hard-solution", soln)
-	else:
-		print("""
-			NO SOLUTION
-			""")
-	print("""
-		==========================
-		""")
 
 def runTests():
 	testSequenceInit()
@@ -108,16 +54,16 @@ def testSequenceInit():
 	]
 
 	for test in shouldBeTrue:
-		assert PzlClass.PuzzleUtil.matches(test[0], test[1])
+		assert PzlUtil.matches(test[0], test[1])
 		seq = PzlClass.Sequence(test[0], test[1], log = True)
 		assert seq is not None
 		assert seq.spreadGroups()
-		startingState = PzlClass.PuzzleUtil.stateForGroups(seq.groups, length = seq.length)
+		startingState = PzlUtil.stateForGroups(seq.groups, length = seq.length)
 		print(startingState)
 		assert startingState is not None and len(startingState) == seq.length
 
 	for test in shouldBeFalse:
-		assert not PzlClass.PuzzleUtil.matches(test[0], test[1])
+		assert not PzlUtil.matches(test[0], test[1])
 		assert PzlClass.Sequence(test[0], test[1], log = True) is not None
 	
 	return
@@ -162,31 +108,11 @@ def runAllStates(seq):
 		seq.nextState()
 		states.append(seq.state)
 
-	drawSolution('states-{}-{}'.format(seq.last, seq.length), states)
+	PzlUtil.drawSolution('states-{}-{}'.format(seq.last, seq.length), states)
 	return
 
-
-def drawSolution(solutionName, states):
-	height = len(states)
-	width = len(states[0])
-	sqpx = 25
-	soln = Image.new("RGB", (width * sqpx + 1, height * sqpx + 1), (255,255,255))
-	draw = ImageDraw.Draw(soln)
-	for row in range(height):
-		
-		for col in range(width):
-			x = col * sqpx 
-			y = row * sqpx
-			fill = (255,255,255)
-			if states[row][col]:
-				fill = (0,0,0)
-			draw.rectangle([x, y, x + sqpx, y + sqpx], fill, (211,226,0))
-
-	soln.save('solutions/' + solutionName + '.gif')
-	return soln
 
 
 if __name__ == "__main__":
 	import sys
 	main(sys.argv[0:-1])
-
