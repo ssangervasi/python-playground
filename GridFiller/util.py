@@ -1,4 +1,6 @@
 from PIL import Image, ImageDraw
+import progressbar as Pbar
+import math
 
 class PuzzleUtil:
 	'''Static methods for solving the puzzle'''
@@ -47,7 +49,6 @@ class PuzzleUtil:
 		soln = Image.new("RGB", (width * sqpx + 1, height * sqpx + 1), (255,255,255))
 		draw = ImageDraw.Draw(soln)
 		for row in range(height):
-			
 			for col in range(width):
 				x = col * sqpx 
 				y = row * sqpx
@@ -61,6 +62,29 @@ class PuzzleUtil:
 
 	# End PuzzleUtil
 	
+class LogBar:
+	"""Progress bar that updates on log scale"""
+
+	def __init__(self, maxValue, factor = 10.0):
+		self.factor = factor if isinstance(factor, float) and factor > 1 else 10.0
+		maxRefactored = self.refactor(maxValue)
+		self.bar = Pbar.ProgressBar(max_value = maxRefactored, widgets = [Pbar.Percentage(), Pbar.Bar(), Pbar.ETA()])
+		return
+	
+	def refactor(self, val):
+		if not val:
+			return
+		return math.log(float(val), self.factor)
+
+	def start(self, updateVal = None):
+		return self.bar.start(self.refactor(updateVal))
+
+	def finish(self):
+		return self.bar.finish()
+
+	def update(self, updateVal):
+		return self.bar.update(self.refactor(updateVal))
+
 
 def loopTest(breadth, depth):
 	results = []

@@ -11,6 +11,7 @@ def main(args):
 
 	solvePuzzle("simple")
 	solvePuzzle("hard")
+	solvePuzzle("large")
 	return
 
 def solvePuzzle(name):

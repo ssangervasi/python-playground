@@ -1,17 +1,33 @@
 from util import PuzzleUtil
+from util import LogBar
 
 class GridPuzzle():
 	"""Wrapper for puzzle data"""
+
 	def __init__(self, patterns = None, grid = None):
 		self.setGrid(grid or [[]])
-		self.patterns = {
-			"rows": patterns[0],
-			"columns": patterns[1]
-		}
+		if isinstance(patterns, dict):
+			self.patterns = patterns
+		elif isinstance(patterns, list):
+			self.patterns = {
+				"rows": patterns[0],
+				"columns": patterns[1]
+			}
+		else:
+			self.patterns = {
+				"rows": [],
+				"columns": []
+			}
+
 		self.sequences = []
 		self.active = 0
 		self.increment = False
 		return
+
+	def getSolutionSpace(self):
+		m = self.width or 0
+		n = self.height or 0
+		return m ** n
 
 	def setGrid(self, grid):
 		self.grid = grid
@@ -21,20 +37,29 @@ class GridPuzzle():
 	
 	def buildSequences(self):
 		self.sequences = [None for i in range(self.width)]
+		solvable = True
 		for rowIndex in range(self.width):
 			initalState = self.grid[rowIndex]
 			pattern = self.patterns["rows"][rowIndex]
-			self.sequences[rowIndex] = Sequence(pattern, initalState)
+			newSequence = Sequence(pattern, initalState)
+			solvable |= newSequence.state == None
+			self.sequences[rowIndex] = newSequence
 
-		return self.sequences
+		return solvable
 
-	def solve(self, maxStep = 100000):
+	def solve(self):
+		solvable = self.buildSequences()
+		maxStep = self.getSolutionSpace()
 		stepsRemaining = 0
-		self.buildSequences()
-		exhausted = False
+		exhausted = not solvable
+		progress = LogBar(maxStep)
+		progress.start()
 		while stepsRemaining < maxStep and not exhausted and not self.isSolved():
 			exhausted = self.nextSolution()
+			stepsRemaining += 1
+			progress.update(stepsRemaining)
 
+		progress.finish()
 		if stepsRemaining == maxStep:
 			print("No solution amongst first {} combinations".format(maxStep))
 
@@ -96,7 +121,6 @@ class Sequence:
 		self.length = len(state)
 		self.pattern = [int(groupLen) for groupLen in pattern]
 		self.initialState = [int(bit) for bit in state]
-		self.prefilled = [index for index in range(self.length) if self.initialState[index] > 0 ]
 		self.groups = [Group(nextLen) for nextLen in pattern]
 		self.invalidStates = set()
 		self.setInitialState()
