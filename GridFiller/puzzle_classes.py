@@ -47,7 +47,7 @@ class GridPuzzle():
 
 		return solvable
 
-	def solve(self):
+	def solve(self, breakAfter = None):
 		solvable = self.buildSequences()
 		maxStep = self.getSolutionSpace()
 		stepsRemaining = 0
@@ -58,6 +58,11 @@ class GridPuzzle():
 			exhausted = self.nextSolution()
 			stepsRemaining += 1
 			progress.update(stepsRemaining)
+			if isinstance(breakAfter, int) and stepsRemaining % breakAfter == 0:
+				for row in self.getSolutionGrid():
+					print(row)
+				answer = input("Continue? (y/n)").strip().lower()
+				exhausted =  not answer or answer[0] != 'y'
 
 		progress.finish()
 		if stepsRemaining == maxStep:
