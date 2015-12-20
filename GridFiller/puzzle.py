@@ -12,64 +12,16 @@ import puzzle_classes as PzlClass
 import json
 
 def getPuzzle(puzzleName = "simple"):
-	if puzzleName == "simple":
-		return getSimpleGridPuzzle()
-
-	elif puzzleName == "hard":
-		return getHardGridPuzzle()
-
-	elif puzzleName == "large":
-		return getLargeGridPuzzle()
-
-def getSimpleGridPuzzle():
-	simplePattern =[
-		[
-			[1, 1],
-			[1],
-			[1, 1]
-		],
-		[
-			[1, 1],
-			[1],
-			[1, 1]
-		]
-	]		
-	simpleGrid = [
-		[0 for i in range(3)] for i in range(3)
-	]
-	simplePuzzle = PzlClass.GridPuzzle(simplePattern, simpleGrid)
-	return simplePuzzle
-
-def getHardGridPuzzle():
-	hardPattern =[
-		[
-			[1, 1],
-			[1, 1],
-			[1, 1, 1],
-			[1, 1],
-			[1, 1]
-		],
-		[
-			[1, 1, 1],
-			[1, 1],
-			[1],
-			[1],
-			[3, 1]
-		]
-	]		
-	hardGrid = [
-		[0 for i in range(5)] for i in range(5)
-	]
-	hardGrid[0][0] = 1
-	hardGrid[2][2] = 1
-	hardPuzzle = PzlClass.GridPuzzle(hardPattern, hardGrid)
-	return hardPuzzle
-
-def getLargeGridPuzzle():
-	return readPuzzle('puzzles/large.json')
+	fileName = 'puzzles/{}.json'.format(puzzleName)
+	return readPuzzle(fileName)
 
 def readPuzzle(fileName):
-	infile = open(fileName)
+	try:
+		infile = open(fileName)
+	except:
+		print("Could not read puzzle -- No such file: '{}'".format(fileName))
+		return
+
 	# Just reading whole text blob for now
 	fileText = infile.read()
 	infile.close()

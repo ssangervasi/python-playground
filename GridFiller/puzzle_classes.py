@@ -42,6 +42,8 @@ class GridPuzzle():
 			initalState = self.grid[rowIndex]
 			pattern = self.patterns["rows"][rowIndex]
 			newSequence = Sequence(pattern, initalState)
+			# print(newSequence.initialState, newSequence.state, newSequence.pattern)
+			# input("Waiting")
 			solvable |= newSequence.state == None
 			self.sequences[rowIndex] = newSequence
 
@@ -64,6 +66,7 @@ class GridPuzzle():
 				answer = input("Continue? (y/n)").strip().lower()
 				exhausted =  not answer or answer[0] != 'y'
 
+		# print(stepsRemaining)
 		progress.finish()
 		if stepsRemaining == maxStep:
 			print("No solution amongst first {} combinations".format(maxStep))
@@ -128,55 +131,73 @@ class Sequence:
 		self.initialState = [int(bit) for bit in state]
 		self.groups = [Group(nextLen) for nextLen in pattern]
 		self.invalidStates = set()
-		self.setInitialState()
+		isInitValid = self.setInitialState()
+		if not isInitValid:
+			print("Invalid Init", self.state)
 		return
 
 
 	def setInitialState(self):
 		self.stateIndex = 0
-		self.spreadGroups()
-		self.state = PuzzleUtil.stateForGroups(self.groups, self.length, self.initialState.copy())
 		self.last = len(self.groups) - 1
 		self.active = self.last
 		self.left = self.last
 		self.edgeLeft = Group(start = -2)
 		self.edgeRight = Group(start = self.length + 1)
-		self.printState(header = True)
-		return self.state
+		# Spread groups to the left edge and construct state 
+		self.spreadGroups()
+		return self.setState()
+
+	def setState(self):
+		'''
+		Set the new state based on the current group structure.
+		Return True if the new state matches the pattern, else False
+		'''
+		# Default sequence has some bits filled
+		newState = self.initialState.copy()
+		PuzzleUtil.stateForGroups(self.groups, state = newState)
+		self.state = newState
+		if PuzzleUtil.matches(self.pattern, newState):
+			self.printState("Valid State")
+			return True
+
+		else:
+			self.invalidStates.add(self.stateIndex)
+			return False
+
 
 	def nextState(self):
 		'''
 		Step to the next valid sequence state. 
 		If no new states exit, reset to inital state.
-		Returns True if result state is the inital state
-		newState = self.initialState.copy()'''
-		if not self.state:
-			return self.setInitialState()
+		Returns True if result state is the inital state, else False
+		'''
+		startIndex = self.stateIndex
+		hitReset = False
+		skipState = True
+		while skipState:
+			skipState = False
+			self.stateIndex += 1
+			self.shiftGroups()
 
-		self.stateIndex += 1
-		self.shiftGroups()
+			if self.left < 0:
+				hitReset = True
+				skipState = not self.setInitialState()
 
-		if self.left < 0:
-			self.setInitialState()
-			self.stateIndex = 0
+			elif self.stateIndex in self.invalidStates:
+				skipState = True
 
-		if (self.stateIndex in self.invalidStates):
-			return self.nextState()
+			else:
+				skipState = not self.setState()
 
-		# Default sequence has some bits filled
-		newState = self.initialState.copy()
-		PuzzleUtil.stateForGroups(self.groups, state = newState)
-		if PuzzleUtil.matches(self.pattern, newState):
-			self.state = newState
-			if self.stateIndex != 0:
-				self.printState("Valid State")
+		if hitReset:
+			if self.stateIndex:
+				print("Reset: {} to {}".format(startIndex, self.stateIndex))
+			self.firstValidIndex = self.stateIndex
 
-		else:
-			# self.printState("Invalid state", newState)
-			self.invalidStates.add(self.stateIndex)
-			return self.nextState()
+		return hitReset
 
-		return self.stateIndex == 0
+
 
 	def shiftGroups(self):
 		# groupIndex = self.last

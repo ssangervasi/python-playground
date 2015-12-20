@@ -4,14 +4,18 @@ import puzzle as Pzl
 
 def main(args):
 	print("Args: ", args)
-	argSet = set(args)
-	if '-t' in argSet or '--run-tests' in argSet: 
+
+	if '-t' in args:
+		args.remove('-t')
 		runTests()
 		print("Passed all tests.")
 
-	solvePuzzle("simple")
-	solvePuzzle("hard")
-	solvePuzzle("large")
+	if len(args) == 0:
+		args.append('simple')
+
+	for puzzleName in args:
+		solvePuzzle(puzzleName)
+
 	return
 
 def solvePuzzle(name):
@@ -19,7 +23,11 @@ def solvePuzzle(name):
 		Solving puzzle: {}
 		=======================
 		""".format(name))
+	
 	puzzle = Pzl.getPuzzle(name)
+	if not puzzle:
+		print("Could not solve puzzle -- No puzzle found for name: '{}'".format(name))
+
 	soln = puzzle.solve()
 	if soln:
 		print(soln)
@@ -116,4 +124,4 @@ def runAllStates(seq):
 
 if __name__ == "__main__":
 	import sys
-	main(sys.argv[0:-1])
+	main(sys.argv[1:])

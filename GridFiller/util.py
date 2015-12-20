@@ -83,7 +83,11 @@ class LogBar:
 		return self.bar.finish()
 
 	def update(self, updateVal):
-		return self.bar.update(self.refactor(updateVal))
+		updateVal = self.refactor(updateVal)
+		if updateVal % 1 == 0:
+			self.bar.update(updateVal)
+
+		return self.bar
 
 
 def loopTest(breadth, depth):
