@@ -191,8 +191,8 @@ class Sequence:
 				skipState = not self.setState()
 
 		if hitReset:
-			if self.stateIndex:
-				print("Reset: {} to {}".format(startIndex, self.stateIndex))
+			# if self.stateIndex:
+			# 	print("Reset: {} to {}".format(startIndex, self.stateIndex))
 			self.firstValidIndex = self.stateIndex
 
 		return hitReset
